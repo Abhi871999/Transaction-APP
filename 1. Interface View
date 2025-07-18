@@ -1,0 +1,118 @@
+@AbapCatalog.viewEnhancementCategory: [#NONE]
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@EndUserText.label: 'Travel root entity'
+@Metadata.ignorePropagatedAnnotations: true
+@ObjectModel.usageType:{
+    serviceQuality: #X,
+    sizeCategory: #S,
+    dataClass: #MIXED
+}
+define root view entity zi_travel_abhi_m
+  as select from /dmo/travel_m
+ composition [0..*] of ZI_Booking_abhi_m as _Booking
+  association[0..1] to /DMO/I_Agency as _Agency on $projection.AgencyId = _Agency.AgencyID
+  association[0..1] to /DMO/I_Customer as _Customer on $projection.CustomerId = _Customer.CustomerID
+  association[1..1] to I_Currency as _Currency on $projection.CurrencyCode = _Currency.Currency
+  association[1..1] to /DMO/I_Overall_Status_VH as _Status on $projection.OverallStatus = _Status.OverallStatus
+{
+  key travel_id       as TravelId,
+      agency_id       as AgencyId,
+      customer_id     as CustomerId,
+      begin_date      as BeginDate,
+      end_date        as EndDate,
+      @Semantics.amount.currencyCode: 'CurrencyCode'
+      booking_fee     as BookingFee,
+      @Semantics.amount.currencyCode: 'CurrencyCode'
+      total_price     as TotalPrice,
+      currency_code   as CurrencyCode,
+      description     as Description,
+      overall_status  as OverallStatus,
+      created_by      as CreatedBy,
+      created_at      as CreatedAt,
+      last_changed_by as LastChangedBy,
+      last_changed_at as LastChangedAt,
+      
+      //Association
+      _Agency,
+      _Customer,
+      _Currency,
+      _Status,
+      _Booking
+}
+-------------------------------------------------------------------------------
+
+@AbapCatalog.viewEnhancementCategory: [#NONE]
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@EndUserText.label: 'Bookinf Interface view managed'
+@Metadata.ignorePropagatedAnnotations: true
+@ObjectModel.usageType:{
+    serviceQuality: #X,
+    sizeCategory: #S,
+    dataClass: #MIXED
+}
+define view entity ZI_Booking_abhi_m
+  as select from /dmo/booking_m
+  association        to parent zi_travel_abhi_m  as _Travel        on  $projection.TravelId = _Travel.TravelId
+  composition [0..*] of ZI_BOOKSUPPL_ABHI_M      as _Bookingsuppl
+  association [1..1] to /DMO/I_Carrier           as _Carrier       on  $projection.CarrierId = _Carrier.AirlineID
+  association [1..1] to /DMO/I_Customer          as _Customer      on  $projection.CustomerId = _Customer.CustomerID
+  association [1..1] to /DMO/I_Connection        as _Connection    on  $projection.CarrierId    = _Connection.AirlineID
+                                                                   and $projection.ConnectionId = _Connection.ConnectionID
+  association [1..1] to /DMO/I_Booking_Status_VH as _BookingStatus on  $projection.BookingStatus = _BookingStatus.BookingStatus
+{
+  key travel_id       as TravelId,
+  key booking_id      as BookingId,
+      booking_date    as BookingDate,
+      customer_id     as CustomerId,
+      carrier_id      as CarrierId,
+      connection_id   as ConnectionId,
+      flight_date     as FlightDate,
+      @Semantics.amount.currencyCode: 'CurrencyCode'
+      flight_price    as FlightPrice,
+      currency_code   as CurrencyCode,
+      booking_status  as BookingStatus,
+      last_changed_at as LastChangedAt,
+
+      //Association
+      _Carrier,
+      _Customer,
+      _Connection,
+      _BookingStatus,
+      _Travel,
+      _Bookingsuppl
+}
+--------------------------------------------------------------------------
+@AbapCatalog.viewEnhancementCategory: [#NONE]
+@AccessControl.authorizationCheck: #NOT_REQUIRED
+@EndUserText.label: 'Booksuppli interface view managed'
+@Metadata.ignorePropagatedAnnotations: true
+@ObjectModel.usageType:{
+    serviceQuality: #X,
+    sizeCategory: #S,
+    dataClass: #MIXED
+}
+define view entity ZI_BOOKSUPPL_ABHI_M
+  as select from /dmo/booksuppl_m
+  association        to parent ZI_Booking_abhi_m as _Booking        on  $projection.TravelId  = _Booking.TravelId
+                                                                    and $projection.BookingId = _Booking.BookingId
+  association [1..1] to  zi_travel_abhi_m        as _travel         on  $projection.TravelId = _travel.TravelId
+  association [1..1] to /DMO/I_Supplement        as _Supplement     on  $projection.SupplementId = _Supplement.SupplementID
+  association [1..*] to /DMO/I_SupplementText    as _SupplementText on  $projection.SupplementId = _SupplementText.SupplementID
+
+{
+  key travel_id             as TravelId,
+  key booking_id            as BookingId,
+  key booking_supplement_id as BookingSupplementId,
+      supplement_id         as SupplementId,
+      @Semantics.amount.currencyCode: 'CurrencyCode'
+      price                 as Price,
+      currency_code         as CurrencyCode,
+      last_changed_at       as LastChangedAt,
+
+      //Association
+      _Supplement,
+      _SupplementText,
+      _Booking ,
+      _travel
+}
+
